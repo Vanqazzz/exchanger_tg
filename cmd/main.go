@@ -2,54 +2,36 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"main/internal/config"
-	"os"
+	"main/internal/handlers"
 
-	"github.com/joho/godotenv"
-	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 	"go.uber.org/zap"
 )
 
 func main() {
-	_ = godotenv.Load()
 
-	cfg := config.Must(config.NewFromEnv())
-
-	l, err := zap.NewDevelopment()
-
-	bot, err := telego.NewBot(cfg.Token)
+	log, err := zap.NewDevelopment()
 	if err != nil {
-		l.Error("new bot", zap.Error(err))
-		os.Exit(1)
+		log.Fatal("Error to enable logger")
+		return
 	}
 
-	l.Info("Bot started")
+	Bot, err := Init(log)
+	if err != nil {
+		log.Fatal("Fail to start bot")
+		return
+	}
 
-	updates, _ := bot.UpdatesViaLongPolling(context.Background(), nil)
+	log.Info("Bot started")
 
-	bh, _ := th.NewBotHandler(bot, updates)
+	updates, _ := Bot.UpdatesViaLongPolling(context.Background(), nil)
+
+	bh, _ := th.NewBotHandler(Bot, updates)
 
 	defer func() { _ = bh.Stop() }()
 
-	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(update.Message.Chat.ID),
-			fmt.Sprintf("Hello %s!", update.Message.From.FirstName),
-		))
-		return nil
-	}, th.CommandEqual("start"))
-
-	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-
-		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(update.Message.Chat.ID),
-			"Unknown command, use /start",
-		))
-		return nil
-	}, th.AnyCommand())
+	handlers.StartHandler(bh, log)
 
 	_ = bh.Start()
+
 }

@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	Token string `env:"Token,required,notEmpty"`
-	API   string `env:"API,required,notEmpty"`
+	Api   string `env:"Api,required,notEmpty"`
 }
 
 func Must(cfg *Config, err error) *Config {
