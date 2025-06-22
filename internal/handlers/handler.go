@@ -30,23 +30,24 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 		).WithReplyMarkup(
 			tu.Keyboard(tu.KeyboardRow(
 
-				tu.KeyboardButton("UAH"),
-				tu.KeyboardButton("CZK"),
-				tu.KeyboardButton("Інші"),
+				tu.KeyboardButton("🇺🇦 UAH"),
+				tu.KeyboardButton("🇨🇿 CZK"),
+				tu.KeyboardButton("💰 Crypto"),
 			),
 			)))
 
 		return nil
 	}, th.CommandEqual("start"))
 
-	// UAH
+	// UAH handler ...
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		log.Info("Rates printed")
+
 		e, err := getExchangeRates("usd.min", log)
 		if err != nil {
 			log.Error("Fail to get rates", zap.Error(err))
 			return err
 		}
+
 		temp := e["usd"].(map[string]interface{})
 
 		USD_Rate := temp["uah"].(float64)
@@ -63,15 +64,16 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 
 		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(update.Message.Chat.ID),
-			fmt.Sprintf("\nКурс UAH:\nUSD: %f\nEUR: %f", USD_Rate, EUR_Rate),
+			fmt.Sprintf("\n🇺🇦 Курс UAH:\n\n🇺🇸 USD: %f\n🇪🇺 EUR: %f", USD_Rate, EUR_Rate),
 		))
+		log.Info("Rates printed")
 		return nil
 
-	}, th.TextEqual("UAH"))
+	}, th.TextEqual("🇺🇦 UAH"))
 
-	// CZK
+	// CZK handler ...
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
-		log.Info("Rates printed")
+
 		e, err := getExchangeRates("usd.min", log)
 		if err != nil {
 			log.Error("Fail to get rates", zap.Error(err))
@@ -92,11 +94,55 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 
 		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(update.Message.Chat.ID),
-			fmt.Sprintf("\nКурс CZK:\nUSD: %f\nEUR: %f", USD_Rate, EUR_Rate),
+			fmt.Sprintf("\n🇨🇿 Курс CZK:\n\n🇺🇸 USD: %f\n🇪🇺 EUR: %f", USD_Rate, EUR_Rate),
 		))
+		log.Info("Rates printed")
 		return nil
 
-	}, th.TextEqual("CZK"))
+	}, th.TextEqual("🇨🇿 CZK"))
+
+	// Crypto handler ...
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		// btc
+		e, err := getExchangeRates("btc.min", log)
+		if err != nil {
+			log.Error("Fail to get rates", zap.Error(err))
+			return err
+		}
+
+		temp := e["btc"].(map[string]interface{})
+
+		BTC_TO_USD_Rate := temp["usd"].(float64)
+
+		// eth
+		e, err = getExchangeRates("eth.min", log)
+		if err != nil {
+			log.Error("Fail to get rates", zap.Error(err))
+			return err
+		}
+
+		temp = e["eth"].(map[string]interface{})
+		ETH_TO_USD_Rate := temp["usd"].(float64)
+
+		// usdt
+		e, err = getExchangeRates("usdt.min", log)
+		if err != nil {
+			log.Error("Fail to get rates", zap.Error(err))
+			return err
+		}
+
+		temp = e["usdt"].(map[string]interface{})
+
+		USDT_TO_USD_Rate := temp["usd"].(float64)
+
+		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
+			tu.ID(update.Message.Chat.ID),
+			fmt.Sprintf("\n⭐ Bitcoin       💲 USD: %f\n⭐ Ethereum 💲 USD: %f\n⭐ USDT          💲 USD: %f\n", BTC_TO_USD_Rate, ETH_TO_USD_Rate, USDT_TO_USD_Rate),
+		))
+		log.Info("Rates printed")
+		return nil
+
+	}, th.TextEqual("💰 Crypto"))
 
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
@@ -109,6 +155,7 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 
 }
 
+// getExchangeRates ...
 func getExchangeRates(currency string, log *zap.Logger) (map[string]interface{}, error) {
 	_ = godotenv.Load()
 	cfg := config.Must(config.NewFromEnv())
