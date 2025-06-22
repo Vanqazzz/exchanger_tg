@@ -34,7 +34,7 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 				tu.KeyboardButton("🇨🇿 CZK"),
 				tu.KeyboardButton("💰 Crypto"),
 			),
-			)))
+			).WithResizeKeyboard()))
 
 		return nil
 	}, th.CommandEqual("start"))
@@ -144,6 +144,17 @@ func StartHandler(bh *th.BotHandler, log *zap.Logger) {
 
 	}, th.TextEqual("💰 Crypto"))
 
+	// Update handler
+	bh.Handle(func(ctx *th.Context, update telego.Update) error {
+		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
+			tu.ID(update.Message.Chat.ID),
+			"Дані оновлено.",
+		))
+
+		return nil
+	}, th.CommandEqual("restart"))
+
+	// Unknown command
 	bh.Handle(func(ctx *th.Context, update telego.Update) error {
 
 		_, _ = ctx.Bot().SendMessage(ctx, tu.Message(
